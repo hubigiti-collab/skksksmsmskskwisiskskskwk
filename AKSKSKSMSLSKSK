@@ -1,0 +1,411 @@
+--[[ 
+    NEXVOID HUB - Design Refinado & Instantâneo
+    By David
+]]
+
+print("Carregando NexVoid Hub...")
+
+-- SERVIÇOS
+local Players = game:GetService("Players")
+local UserInputService = game:GetService("UserInputService")
+local TweenService = game:GetService("TweenService")
+local LocalPlayer = Players.LocalPlayer
+
+if not LocalPlayer then
+	repeat task.wait() until Players.LocalPlayer
+	LocalPlayer = Players.LocalPlayer
+end
+
+-- ===========================
+-- CONFIGURAÇÕES VISUAIS
+-- ===========================
+local isMobile = UserInputService.TouchEnabled
+
+-- Dimensões
+local Config = {
+	-- Tamanho da Janela
+	MainSize = isMobile and UDim2.new(0, 500, 0, 320) or UDim2.new(0, 600, 0, 400),
+	
+	-- Largura da Barra Lateral
+	SidebarWidth = isMobile and 130 or 150,
+	
+	-- Altura do Rodapé (Mais fino)
+	FooterHeight = 18, 
+	
+	-- Altura dos Botões da Sidebar
+	BtnHeight = isMobile and 29 or 36,
+	
+	-- Tamanhos de Texto/Ícone
+	FontSize = isMobile and 11 or 13,
+	IconSize = isMobile and 14 or 18,
+	
+	ListPadding = UDim.new(0, 2)
+}
+
+-- REMOVE UI ANTIGA
+pcall(function()
+	if LocalPlayer.PlayerGui:FindFirstChild("NexVoidHub") then
+		LocalPlayer.PlayerGui.NexVoidHub:Destroy()
+	end
+end)
+
+-- TEMA DE CORES
+local Theme = {
+	-- Cor Escura (TopBar, Sidebar, Rodapé)
+	FrameColor = Color3.fromRGB(18, 18, 18), 
+	
+	-- Cor Mais Clara (Área dos Scripts/Conteúdo)
+	ContentColor = Color3.fromRGB(32, 32, 32),
+	
+	Accent = Color3.fromRGB(0, 190, 255),
+	Text = Color3.fromRGB(245, 245, 245),
+	TextDark = Color3.fromRGB(140, 140, 140),
+	Font = Enum.Font.GothamBold,
+	CloseRed = Color3.fromRGB(255, 60, 60)
+}
+
+-- GUI PRINCIPAL
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = "NexVoidHub"
+ScreenGui.Parent = LocalPlayer:WaitForChild("PlayerGui")
+ScreenGui.ResetOnSpawn = false
+ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+
+-- ===========================
+-- BOTÃO FLUTUANTE (LOGO)
+-- ===========================
+local OpenButton = Instance.new("ImageButton")
+OpenButton.Name = "OpenButton"
+OpenButton.Size = UDim2.new(0, 50, 0, 50)
+OpenButton.Position = UDim2.new(0, 30, 0.4, 0)
+OpenButton.BackgroundColor3 = Theme.FrameColor
+OpenButton.Image = "rbxassetid://112262395405082"
+OpenButton.Visible = false
+OpenButton.Active = true
+OpenButton.Draggable = true
+OpenButton.Parent = ScreenGui
+
+-- Mantendo arredondado apenas na logo, conforme solicitado anteriormente
+local OpenBtnCorner = Instance.new("UICorner")
+OpenBtnCorner.CornerRadius = UDim.new(0, 14) 
+OpenBtnCorner.Parent = OpenButton
+
+local OpenBtnStroke = Instance.new("UIStroke")
+OpenBtnStroke.Color = Theme.Accent
+OpenBtnStroke.Thickness = 1.5
+OpenBtnStroke.Parent = OpenButton
+
+-- ===========================
+-- JANELA PRINCIPAL (MAIN FRAME)
+-- ===========================
+local MainFrame = Instance.new("Frame")
+MainFrame.Name = "MainFrame"
+MainFrame.Size = Config.MainSize
+MainFrame.Position = UDim2.new(0.5, -Config.MainSize.X.Offset/2, 0.5, -Config.MainSize.Y.Offset/2)
+MainFrame.BackgroundColor3 = Theme.FrameColor -- Fundo geral escuro
+MainFrame.BorderSizePixel = 0
+MainFrame.Active = true
+MainFrame.Draggable = true
+MainFrame.ClipsDescendants = true
+MainFrame.Parent = ScreenGui
+
+-- TOP BAR (Fixo 40px - Escuro)
+local TopBar = Instance.new("Frame")
+TopBar.Size = UDim2.new(1, 0, 0, 40)
+TopBar.BackgroundColor3 = Theme.FrameColor
+TopBar.BorderSizePixel = 0
+TopBar.Parent = MainFrame
+
+local TitleLabel = Instance.new("TextLabel")
+TitleLabel.Text = "Nex<font color='rgb(0,190,255)'>Void</font>"
+TitleLabel.RichText = true
+TitleLabel.Size = UDim2.new(0, 200, 1, 0)
+TitleLabel.BackgroundTransparency = 1
+TitleLabel.Font = Theme.Font
+TitleLabel.TextSize = 18
+TitleLabel.TextColor3 = Theme.Text
+TitleLabel.TextXAlignment = Enum.TextXAlignment.Left
+TitleLabel.Position = UDim2.new(0, 45, 0, 0)
+TitleLabel.Parent = TopBar
+
+local LogoIcon = Instance.new("ImageLabel")
+LogoIcon.Image = "rbxassetid://124956767763560"
+LogoIcon.Size = UDim2.new(0, 20, 0, 20)
+LogoIcon.Position = UDim2.new(0, 15, 0.5, -10)
+LogoIcon.BackgroundTransparency = 1
+LogoIcon.ScaleType = Enum.ScaleType.Fit
+LogoIcon.ImageColor3 = Theme.Accent
+LogoIcon.Parent = TopBar
+
+-- BOTÕES DE CONTROLE
+local CloseBtn = Instance.new("TextButton")
+CloseBtn.Parent = TopBar
+CloseBtn.BackgroundTransparency = 1
+CloseBtn.Position = UDim2.new(1, -40, 0, 0)
+CloseBtn.Size = UDim2.new(0, 40, 1, 0)
+CloseBtn.Font = Enum.Font.GothamBlack
+CloseBtn.Text = "X"
+CloseBtn.TextSize = 16
+CloseBtn.TextColor3 = Theme.TextDark
+
+local MinimizeBtn = Instance.new("TextButton")
+MinimizeBtn.Parent = TopBar
+MinimizeBtn.BackgroundTransparency = 1
+MinimizeBtn.Position = UDim2.new(1, -80, 0, 0)
+MinimizeBtn.Size = UDim2.new(0, 40, 1, 0)
+MinimizeBtn.Text = ""
+
+local MinimizeIcon = Instance.new("Frame")
+MinimizeIcon.Size = UDim2.new(0, 12, 0, 2)
+MinimizeIcon.Position = UDim2.new(0.5, -6, 0.5, 0)
+MinimizeIcon.BackgroundColor3 = Theme.TextDark
+MinimizeIcon.BorderSizePixel = 0
+MinimizeIcon.Parent = MinimizeBtn
+
+-- FOOTER (Fixo 18px - Escuro)
+local BottomBar = Instance.new("Frame")
+BottomBar.Size = UDim2.new(1, 0, 0, Config.FooterHeight)
+BottomBar.Position = UDim2.new(0, 0, 1, -Config.FooterHeight)
+BottomBar.BackgroundColor3 = Theme.FrameColor
+BottomBar.BorderSizePixel = 0
+BottomBar.ZIndex = 5
+BottomBar.Parent = MainFrame
+
+local StatusText = Instance.new("TextLabel")
+StatusText.Text = isMobile and "NexVoid Mobile" or "NexVoid PC"
+StatusText.Size = UDim2.new(1, -5, 1, 0)
+StatusText.BackgroundTransparency = 1
+StatusText.TextColor3 = Theme.TextDark
+StatusText.Font = Theme.Font
+StatusText.TextSize = 9 -- Texto menor para acompanhar o rodapé fino
+StatusText.TextXAlignment = Enum.TextXAlignment.Right
+StatusText.ZIndex = 6
+StatusText.Parent = BottomBar
+
+-- ===========================
+-- CONTAINER CENTRAL
+-- ===========================
+local CenterContainer = Instance.new("Frame")
+CenterContainer.Name = "CenterContainer"
+-- Ocupa o espaço entre TopBar (40) e Footer (18) -> Total 58px de desconto
+CenterContainer.Size = UDim2.new(1, 0, 1, -(40 + Config.FooterHeight))
+CenterContainer.Position = UDim2.new(0, 0, 0, 40)
+CenterContainer.BackgroundTransparency = 1
+CenterContainer.Parent = MainFrame
+
+-- SIDEBAR (Escuro)
+local Sidebar = Instance.new("Frame")
+Sidebar.Name = "Sidebar"
+Sidebar.Size = UDim2.new(0, Config.SidebarWidth, 1, 0)
+Sidebar.BackgroundColor3 = Theme.FrameColor
+Sidebar.BorderSizePixel = 0
+Sidebar.Parent = CenterContainer
+
+local SidebarList = Instance.new("UIListLayout")
+SidebarList.Padding = Config.ListPadding
+SidebarList.SortOrder = Enum.SortOrder.LayoutOrder
+SidebarList.Parent = Sidebar
+
+local SidebarPadding = Instance.new("UIPadding")
+SidebarPadding.PaddingTop = UDim.new(0, 5)
+SidebarPadding.Parent = Sidebar
+
+-- CONTENT AREA (Claro)
+local ContentArea = Instance.new("Frame")
+ContentArea.Name = "ContentArea"
+ContentArea.Size = UDim2.new(1, -Config.SidebarWidth, 1, 0)
+ContentArea.Position = UDim2.new(0, Config.SidebarWidth, 0, 0)
+ContentArea.BackgroundColor3 = Theme.ContentColor -- Fundo CLARO
+ContentArea.BorderSizePixel = 0
+ContentArea.Parent = CenterContainer
+
+-- ===========================
+-- LÓGICA DE MINIMIZAR (SEM DELAY)
+-- ===========================
+local ConfirmModal = Instance.new("Frame")
+ConfirmModal.Size = UDim2.new(1, 0, 1, 0)
+ConfirmModal.BackgroundColor3 = Color3.new(0,0,0)
+ConfirmModal.BackgroundTransparency = 0.5
+ConfirmModal.Visible = false
+ConfirmModal.ZIndex = 10
+ConfirmModal.Parent = MainFrame
+
+local ConfirmBox = Instance.new("Frame")
+ConfirmBox.Size = UDim2.new(0, 250, 0, 120)
+ConfirmBox.AnchorPoint = Vector2.new(0.5, 0.5)
+ConfirmBox.Position = UDim2.new(0.5, 0, 0.5, 0)
+ConfirmBox.BackgroundColor3 = Theme.FrameColor
+ConfirmBox.BorderSizePixel = 0
+ConfirmBox.ZIndex = 11
+ConfirmBox.Parent = ConfirmModal
+
+local ConfirmTitle = Instance.new("TextLabel")
+ConfirmTitle.Text = "CONFIRMAÇÃO"
+ConfirmTitle.Font = Theme.Font
+ConfirmTitle.TextSize = 14
+ConfirmTitle.TextColor3 = Theme.Accent
+ConfirmTitle.Size = UDim2.new(1, 0, 0, 35)
+ConfirmTitle.BackgroundTransparency = 1
+ConfirmTitle.ZIndex = 12
+ConfirmTitle.Parent = ConfirmBox
+
+local ConfirmDesc = Instance.new("TextLabel")
+ConfirmDesc.Text = "Sair do Script?"
+ConfirmDesc.Font = Enum.Font.Gotham
+ConfirmDesc.TextSize = 14
+ConfirmDesc.TextColor3 = Theme.Text
+ConfirmDesc.Size = UDim2.new(1, 0, 0, 30)
+ConfirmDesc.Position = UDim2.new(0, 0, 0, 35)
+ConfirmDesc.BackgroundTransparency = 1
+ConfirmDesc.ZIndex = 12
+ConfirmDesc.Parent = ConfirmBox
+
+local YesBtn = Instance.new("TextButton")
+YesBtn.Text = "Sair"
+YesBtn.Size = UDim2.new(0, 90, 0, 30)
+YesBtn.Position = UDim2.new(0, 20, 0, 75)
+YesBtn.BackgroundColor3 = Theme.CloseRed
+YesBtn.TextColor3 = Color3.new(1,1,1)
+YesBtn.Font = Theme.Font
+YesBtn.TextSize = 12
+YesBtn.ZIndex = 12
+YesBtn.BorderSizePixel = 0
+YesBtn.Parent = ConfirmBox
+
+local NoBtn = Instance.new("TextButton")
+NoBtn.Text = "Cancelar"
+NoBtn.Size = UDim2.new(0, 90, 0, 30)
+NoBtn.Position = UDim2.new(1, -110, 0, 75)
+NoBtn.BackgroundColor3 = Theme.ContentColor
+NoBtn.TextColor3 = Theme.TextDark
+NoBtn.Font = Theme.Font
+NoBtn.TextSize = 12
+NoBtn.ZIndex = 12
+NoBtn.BorderSizePixel = 0
+NoBtn.Parent = ConfirmBox
+
+-- Eventos
+CloseBtn.MouseButton1Click:Connect(function() ConfirmModal.Visible = true end)
+NoBtn.MouseButton1Click:Connect(function() ConfirmModal.Visible = false end)
+YesBtn.MouseButton1Click:Connect(function() ScreenGui:Destroy() end)
+
+local function ToggleMenu()
+	if MainFrame.Visible then
+		MainFrame.Visible = false
+		-- Aparece instantaneamente (Sem Tween)
+		OpenButton.Visible = true
+		OpenButton.Size = UDim2.new(0, 50, 0, 50) 
+	else
+		MainFrame.Visible = true
+		OpenButton.Visible = false
+	end
+end
+
+MinimizeBtn.MouseButton1Click:Connect(ToggleMenu)
+OpenButton.MouseButton1Click:Connect(ToggleMenu)
+
+-- ===========================
+-- SISTEMA DE ABAS
+-- ===========================
+local tabs = {}
+
+function createSidebarButton(iconId, name)
+	-- PAGE
+	local Page = Instance.new("ScrollingFrame")
+	Page.Name = name .. "Page"
+	Page.Size = UDim2.new(1, -20, 1, -10)
+	Page.Position = UDim2.new(0, 10, 0, 5)
+	Page.BackgroundTransparency = 1
+	Page.BorderSizePixel = 0
+	Page.ScrollBarThickness = 2
+	Page.ScrollBarImageColor3 = Theme.Accent
+	Page.Visible = false
+	Page.Parent = ContentArea
+
+	local PageLabel = Instance.new("TextLabel")
+	PageLabel.Text = name
+	PageLabel.Size = UDim2.new(1,0,0,30)
+	PageLabel.BackgroundTransparency = 1
+	PageLabel.TextColor3 = Theme.Accent
+	PageLabel.Font = Theme.Font
+	PageLabel.TextSize = 16
+	PageLabel.TextXAlignment = Enum.TextXAlignment.Left
+	PageLabel.Parent = Page
+
+	-- BUTTON
+	local TabButton = Instance.new("TextButton")
+	TabButton.Size = UDim2.new(1, 0, 0, Config.BtnHeight)
+	TabButton.BackgroundTransparency = 1
+	TabButton.Text = ""
+	TabButton.Parent = Sidebar
+
+	local Indicator = Instance.new("Frame")
+	Indicator.Size = UDim2.new(0, 3, 0.7, 0)
+	Indicator.Position = UDim2.new(0, 0, 0.15, 0)
+	Indicator.BackgroundColor3 = Theme.Accent
+	Indicator.BackgroundTransparency = 1
+	Indicator.BorderSizePixel = 0
+	Indicator.Parent = TabButton
+
+	local Icon = Instance.new("ImageLabel")
+	Icon.Image = "rbxassetid://" .. iconId
+	Icon.Size = UDim2.new(0, Config.IconSize, 0, Config.IconSize)
+	Icon.Position = UDim2.new(0, 12, 0.5, -(Config.IconSize/2))
+	Icon.BackgroundTransparency = 1
+	Icon.ScaleType = Enum.ScaleType.Fit
+	Icon.ImageColor3 = Theme.TextDark
+	Icon.Parent = TabButton
+
+	local Label = Instance.new("TextLabel")
+	Label.Text = name
+	Label.Size = UDim2.new(0, 100, 1, 0)
+	Label.Position = UDim2.new(0, 38, 0, 0)
+	Label.BackgroundTransparency = 1
+	Label.Font = Theme.Font
+	Label.TextSize = Config.FontSize
+	Label.TextColor3 = Theme.TextDark
+	Label.TextXAlignment = Enum.TextXAlignment.Left
+	Label.Parent = TabButton
+
+	TabButton.MouseButton1Click:Connect(function()
+		for _, tab in pairs(tabs) do
+			tab.Page.Visible = false
+			tab.Indicator.BackgroundTransparency = 1
+			tab.Label.TextColor3 = Theme.TextDark
+			tab.Icon.ImageColor3 = Theme.TextDark
+		end
+		Page.Visible = true
+		Indicator.BackgroundTransparency = 0
+		Label.TextColor3 = Theme.Accent
+		Icon.ImageColor3 = Theme.Accent
+	end)
+
+	table.insert(tabs, {
+		Page = Page,
+		Indicator = Indicator,
+		Label = Label,
+		Icon = Icon
+	})
+end
+
+-- ===========================
+-- CRIAÇÃO DAS ABAS
+-- ===========================
+createSidebarButton("76176408662599", "Visual")
+createSidebarButton("105442920358687", "Progress")
+createSidebarButton("18550050307", "Textures")
+createSidebarButton("11322093465", "Legit")
+createSidebarButton("12689978575", "Teleport")
+createSidebarButton("114326908103962", "CrossHair")
+createSidebarButton("7203392850", "Sounds")
+createSidebarButton("18692715829", "Settings")
+
+-- INICIAL
+if tabs[1] then
+	tabs[1].Page.Visible = true
+	tabs[1].Indicator.BackgroundTransparency = 0
+	tabs[1].Label.TextColor3 = Theme.Accent
+	tabs[1].Icon.ImageColor3 = Theme.Accent
+end
+
+print("NexVoid Hub: Cores e Design Atualizados!")
