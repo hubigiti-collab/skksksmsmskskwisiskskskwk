@@ -1,9 +1,7 @@
 --[[ 
-    NEXVOID HUB - Design Refinado & Instantâneo
-    By David
+    NEXVOID HUB - Versão Final (Lupa Grande + Keyboard Fix + Footer RGB)
+    By DraxynSoulx (UI by David)
 ]]
-
-print("Carregando NexVoid Hub...")
 
 -- SERVIÇOS
 local Players = game:GetService("Players")
@@ -17,28 +15,19 @@ if not LocalPlayer then
 end
 
 -- ===========================
--- CONFIGURAÇÕES VISUAIS
+-- CONFIGURAÇÕES
 -- ===========================
 local isMobile = UserInputService.TouchEnabled
+local CurrentKey = Enum.KeyCode.K
+local ExecutorName = identifyexecutor and identifyexecutor() or "Desconhecido"
 
--- Dimensões
 local Config = {
-	-- Tamanho da Janela
 	MainSize = isMobile and UDim2.new(0, 500, 0, 320) or UDim2.new(0, 600, 0, 400),
-	
-	-- Largura da Barra Lateral
 	SidebarWidth = isMobile and 130 or 150,
-	
-	-- Altura do Rodapé (Mais fino)
 	FooterHeight = 18, 
-	
-	-- Altura dos Botões da Sidebar
 	BtnHeight = isMobile and 29 or 36,
-	
-	-- Tamanhos de Texto/Ícone
 	FontSize = isMobile and 11 or 13,
 	IconSize = isMobile and 14 or 18,
-	
 	ListPadding = UDim.new(0, 2)
 }
 
@@ -49,16 +38,12 @@ pcall(function()
 	end
 end)
 
--- TEMA DE CORES
+-- TEMA
 local Theme = {
-	-- Cor Escura (TopBar, Sidebar, Rodapé)
 	FrameColor = Color3.fromRGB(18, 18, 18), 
-	
-	-- Cor Mais Clara (Área dos Scripts/Conteúdo)
 	ContentColor = Color3.fromRGB(32, 32, 32),
-	
-	Accent = Color3.fromRGB(0, 190, 255),
-	Text = Color3.fromRGB(245, 245, 245),
+	Accent = Color3.fromRGB(0, 190, 255), -- Azul Neon
+	Text = Color3.fromRGB(255, 255, 255), -- Branco Puro
 	TextDark = Color3.fromRGB(140, 140, 140),
 	Font = Enum.Font.GothamBold,
 	CloseRed = Color3.fromRGB(255, 60, 60)
@@ -85,7 +70,6 @@ OpenButton.Active = true
 OpenButton.Draggable = true
 OpenButton.Parent = ScreenGui
 
--- Mantendo arredondado apenas na logo, conforme solicitado anteriormente
 local OpenBtnCorner = Instance.new("UICorner")
 OpenBtnCorner.CornerRadius = UDim.new(0, 14) 
 OpenBtnCorner.Parent = OpenButton
@@ -96,27 +80,29 @@ OpenBtnStroke.Thickness = 1.5
 OpenBtnStroke.Parent = OpenButton
 
 -- ===========================
--- JANELA PRINCIPAL (MAIN FRAME)
+-- MAIN FRAME
 -- ===========================
 local MainFrame = Instance.new("Frame")
 MainFrame.Name = "MainFrame"
 MainFrame.Size = Config.MainSize
 MainFrame.Position = UDim2.new(0.5, -Config.MainSize.X.Offset/2, 0.5, -Config.MainSize.Y.Offset/2)
-MainFrame.BackgroundColor3 = Theme.FrameColor -- Fundo geral escuro
+MainFrame.BackgroundColor3 = Theme.FrameColor
 MainFrame.BorderSizePixel = 0
 MainFrame.Active = true
 MainFrame.Draggable = true
 MainFrame.ClipsDescendants = true
 MainFrame.Parent = ScreenGui
 
--- TOP BAR (Fixo 40px - Escuro)
+-- TOP BAR
 local TopBar = Instance.new("Frame")
 TopBar.Size = UDim2.new(1, 0, 0, 40)
 TopBar.BackgroundColor3 = Theme.FrameColor
 TopBar.BorderSizePixel = 0
 TopBar.Parent = MainFrame
 
+-- TÍTULO (ESQUERDA)
 local TitleLabel = Instance.new("TextLabel")
+TitleLabel.Name = "TitleLabel"
 TitleLabel.Text = "Nex<font color='rgb(0,190,255)'>Void</font>"
 TitleLabel.RichText = true
 TitleLabel.Size = UDim2.new(0, 200, 1, 0)
@@ -137,63 +123,110 @@ LogoIcon.ScaleType = Enum.ScaleType.Fit
 LogoIcon.ImageColor3 = Theme.Accent
 LogoIcon.Parent = TopBar
 
--- BOTÕES DE CONTROLE
-local CloseBtn = Instance.new("TextButton")
-CloseBtn.Parent = TopBar
-CloseBtn.BackgroundTransparency = 1
-CloseBtn.Position = UDim2.new(1, -40, 0, 0)
-CloseBtn.Size = UDim2.new(0, 40, 1, 0)
-CloseBtn.Font = Enum.Font.GothamBlack
-CloseBtn.Text = "X"
-CloseBtn.TextSize = 16
-CloseBtn.TextColor3 = Theme.TextDark
+-- ===========================
+-- BOTÕES DO TOPO (DIREITA)
+-- ===========================
+local function createTopBtn(name, icon, offsetOrder, isImage)
+	local Btn
+	if isImage then
+		Btn = Instance.new("ImageButton")
+		Btn.Image = "rbxassetid://" .. icon
+		Btn.ScaleType = Enum.ScaleType.Fit
+		
+		-- Tamanho do ícone interno (Lupa maior)
+		local iconSize = (name == "Search") and 22 or 16 
+		
+		Btn.ImageTransparency = 1 
+		
+		local Inner = Instance.new("ImageLabel")
+		Inner.Size = UDim2.new(0, iconSize, 0, iconSize)
+		-- Centraliza perfeitamente baseado no tamanho
+		Inner.Position = UDim2.new(0.5, -(iconSize/2), 0.5, -(iconSize/2))
+		Inner.BackgroundTransparency = 1
+		Inner.Image = "rbxassetid://" .. icon
+		Inner.ImageColor3 = Theme.TextDark
+		Inner.ScaleType = Enum.ScaleType.Fit
+		Inner.Parent = Btn
+		
+		Btn.MouseEnter:Connect(function() Inner.ImageColor3 = Theme.Accent end)
+		Btn.MouseLeave:Connect(function() Inner.ImageColor3 = Theme.TextDark end)
+	else
+		Btn = Instance.new("TextButton")
+		Btn.Text = icon
+		Btn.Font = Enum.Font.GothamBlack
+		Btn.TextSize = 16
+		Btn.TextColor3 = Theme.TextDark
+		
+		if icon == "-" then
+			Btn.Text = ""
+			local Line = Instance.new("Frame")
+			Line.Size = UDim2.new(0, 12, 0, 2)
+			Line.Position = UDim2.new(0.5, -6, 0.5, 0)
+			Line.BackgroundColor3 = Theme.TextDark
+			Line.BorderSizePixel = 0
+			Line.Parent = Btn
+			Btn.MouseEnter:Connect(function() Line.BackgroundColor3 = Theme.Accent end)
+			Btn.MouseLeave:Connect(function() Line.BackgroundColor3 = Theme.TextDark end)
+		else
+			Btn.MouseEnter:Connect(function() Btn.TextColor3 = Theme.CloseRed end)
+			Btn.MouseLeave:Connect(function() Btn.TextColor3 = Theme.TextDark end)
+		end
+	end
 
-local MinimizeBtn = Instance.new("TextButton")
-MinimizeBtn.Parent = TopBar
-MinimizeBtn.BackgroundTransparency = 1
-MinimizeBtn.Position = UDim2.new(1, -80, 0, 0)
-MinimizeBtn.Size = UDim2.new(0, 40, 1, 0)
-MinimizeBtn.Text = ""
+	Btn.Name = name
+	Btn.Parent = TopBar
+	Btn.BackgroundTransparency = 1
+	Btn.Position = UDim2.new(1, -(40 * offsetOrder), 0, 0)
+	Btn.Size = UDim2.new(0, 40, 1, 0)
+	
+	return Btn
+end
 
-local MinimizeIcon = Instance.new("Frame")
-MinimizeIcon.Size = UDim2.new(0, 12, 0, 2)
-MinimizeIcon.Position = UDim2.new(0.5, -6, 0.5, 0)
-MinimizeIcon.BackgroundColor3 = Theme.TextDark
-MinimizeIcon.BorderSizePixel = 0
-MinimizeIcon.Parent = MinimizeBtn
+local CloseBtn = createTopBtn("Close", "X", 1, false)
+local MinimizeBtn = createTopBtn("Minimize", "-", 2, false)
+local SettingsBtn = createTopBtn("Settings", "11293977610", 3, true)
+local SearchBtn = createTopBtn("Search", "104986431790017", 4, true)
 
--- FOOTER (Fixo 18px - Escuro)
-local BottomBar = Instance.new("Frame")
-BottomBar.Size = UDim2.new(1, 0, 0, Config.FooterHeight)
-BottomBar.Position = UDim2.new(0, 0, 1, -Config.FooterHeight)
-BottomBar.BackgroundColor3 = Theme.FrameColor
-BottomBar.BorderSizePixel = 0
-BottomBar.ZIndex = 5
-BottomBar.Parent = MainFrame
+-- BARRA DE PESQUISA
+local SearchContainer = Instance.new("Frame")
+SearchContainer.Name = "SearchContainer"
+SearchContainer.Size = UDim2.new(0, 0, 0, 26) 
+SearchContainer.Position = UDim2.new(1, -165, 0.5, -13)
+SearchContainer.AnchorPoint = Vector2.new(1, 0)
+SearchContainer.BackgroundColor3 = Theme.ContentColor
+SearchContainer.BorderSizePixel = 0
+SearchContainer.ClipsDescendants = true
+SearchContainer.Parent = TopBar
 
-local StatusText = Instance.new("TextLabel")
-StatusText.Text = isMobile and "NexVoid Mobile" or "NexVoid PC"
-StatusText.Size = UDim2.new(1, -5, 1, 0)
-StatusText.BackgroundTransparency = 1
-StatusText.TextColor3 = Theme.TextDark
-StatusText.Font = Theme.Font
-StatusText.TextSize = 9 -- Texto menor para acompanhar o rodapé fino
-StatusText.TextXAlignment = Enum.TextXAlignment.Right
-StatusText.ZIndex = 6
-StatusText.Parent = BottomBar
+local SearchCorner = Instance.new("UICorner")
+SearchCorner.CornerRadius = UDim.new(0, 4)
+SearchCorner.Parent = SearchContainer
+
+local SearchBox = Instance.new("TextBox")
+SearchBox.Size = UDim2.new(1, -10, 1, 0)
+SearchBox.Position = UDim2.new(0, 10, 0, 0)
+SearchBox.BackgroundTransparency = 1
+SearchBox.Text = ""
+SearchBox.PlaceholderText = "Pesquisar..."
+SearchBox.TextColor3 = Theme.Text
+SearchBox.PlaceholderColor3 = Theme.TextDark
+SearchBox.Font = Theme.Font
+SearchBox.TextSize = 12
+SearchBox.TextXAlignment = Enum.TextXAlignment.Left
+SearchBox.ClearTextOnFocus = false
+SearchBox.Parent = SearchContainer
 
 -- ===========================
 -- CONTAINER CENTRAL
 -- ===========================
 local CenterContainer = Instance.new("Frame")
 CenterContainer.Name = "CenterContainer"
--- Ocupa o espaço entre TopBar (40) e Footer (18) -> Total 58px de desconto
 CenterContainer.Size = UDim2.new(1, 0, 1, -(40 + Config.FooterHeight))
 CenterContainer.Position = UDim2.new(0, 0, 0, 40)
 CenterContainer.BackgroundTransparency = 1
 CenterContainer.Parent = MainFrame
 
--- SIDEBAR (Escuro)
+-- SIDEBAR
 local Sidebar = Instance.new("Frame")
 Sidebar.Name = "Sidebar"
 Sidebar.Size = UDim2.new(0, Config.SidebarWidth, 1, 0)
@@ -210,56 +243,90 @@ local SidebarPadding = Instance.new("UIPadding")
 SidebarPadding.PaddingTop = UDim.new(0, 5)
 SidebarPadding.Parent = Sidebar
 
--- CONTENT AREA (Claro)
+-- CONTENT AREA
 local ContentArea = Instance.new("Frame")
 ContentArea.Name = "ContentArea"
 ContentArea.Size = UDim2.new(1, -Config.SidebarWidth, 1, 0)
 ContentArea.Position = UDim2.new(0, Config.SidebarWidth, 0, 0)
-ContentArea.BackgroundColor3 = Theme.ContentColor -- Fundo CLARO
+ContentArea.BackgroundColor3 = Theme.ContentColor
 ContentArea.BorderSizePixel = 0
 ContentArea.Parent = CenterContainer
 
+-- FOOTER (RODAPÉ)
+local BottomBar = Instance.new("Frame")
+BottomBar.Size = UDim2.new(1, 0, 0, Config.FooterHeight)
+BottomBar.Position = UDim2.new(0, 0, 1, -Config.FooterHeight)
+BottomBar.BackgroundColor3 = Theme.FrameColor
+BottomBar.BorderSizePixel = 0
+BottomBar.ZIndex = 5
+BottomBar.Parent = MainFrame
+
+-- TEXTO RODAPÉ (RGB BRANCO E AZUL)
+local StatusText = Instance.new("TextLabel")
+StatusText.RichText = true -- Habilita RGB
+local modeText = isMobile and "Mobile" or "PC"
+StatusText.Text = "NexVoid <font color='rgb(0,190,255)'>" .. modeText .. "</font>"
+StatusText.Size = UDim2.new(1, -5, 1, 0)
+StatusText.BackgroundTransparency = 1
+StatusText.TextColor3 = Theme.Text -- NexVoid fica Branco (base)
+StatusText.Font = Theme.Font
+StatusText.TextSize = 10
+StatusText.TextXAlignment = Enum.TextXAlignment.Right
+StatusText.ZIndex = 6
+StatusText.Parent = BottomBar
+
 -- ===========================
--- LÓGICA DE MINIMIZAR (SEM DELAY)
+-- MODAIS
 -- ===========================
-local ConfirmModal = Instance.new("Frame")
-ConfirmModal.Size = UDim2.new(1, 0, 1, 0)
-ConfirmModal.BackgroundColor3 = Color3.new(0,0,0)
-ConfirmModal.BackgroundTransparency = 0.5
-ConfirmModal.Visible = false
-ConfirmModal.ZIndex = 10
-ConfirmModal.Parent = MainFrame
+local ModalOverlay = Instance.new("Frame")
+ModalOverlay.Size = UDim2.new(1, 0, 1, 0)
+ModalOverlay.BackgroundColor3 = Color3.new(0,0,0)
+ModalOverlay.BackgroundTransparency = 0.5
+ModalOverlay.Visible = false
+ModalOverlay.ZIndex = 10
+ModalOverlay.Parent = MainFrame
 
-local ConfirmBox = Instance.new("Frame")
-ConfirmBox.Size = UDim2.new(0, 250, 0, 120)
-ConfirmBox.AnchorPoint = Vector2.new(0.5, 0.5)
-ConfirmBox.Position = UDim2.new(0.5, 0, 0.5, 0)
-ConfirmBox.BackgroundColor3 = Theme.FrameColor
-ConfirmBox.BorderSizePixel = 0
-ConfirmBox.ZIndex = 11
-ConfirmBox.Parent = ConfirmModal
+local function createModalBox(height)
+	local Box = Instance.new("Frame")
+	Box.Size = UDim2.new(0, 280, 0, height)
+	Box.AnchorPoint = Vector2.new(0.5, 0.5)
+	Box.Position = UDim2.new(0.5, 0, 0.5, 0)
+	Box.BackgroundColor3 = Theme.FrameColor
+	Box.BorderSizePixel = 0
+	Box.ZIndex = 11
+	Box.Visible = false
+	Box.Parent = ModalOverlay
+	
+	local TopLine = Instance.new("Frame")
+	TopLine.Size = UDim2.new(1, 0, 0, 2)
+	TopLine.BackgroundColor3 = Theme.Accent
+	TopLine.BorderSizePixel = 0
+	TopLine.ZIndex = 12
+	TopLine.Parent = Box
+	return Box
+end
 
-local ConfirmTitle = Instance.new("TextLabel")
-ConfirmTitle.Text = "CONFIRMAÇÃO"
-ConfirmTitle.Font = Theme.Font
-ConfirmTitle.TextSize = 14
-ConfirmTitle.TextColor3 = Theme.Accent
-ConfirmTitle.Size = UDim2.new(1, 0, 0, 35)
-ConfirmTitle.BackgroundTransparency = 1
-ConfirmTitle.ZIndex = 12
-ConfirmTitle.Parent = ConfirmBox
-
-local ConfirmDesc = Instance.new("TextLabel")
-ConfirmDesc.Text = "Sair do Script?"
-ConfirmDesc.Font = Enum.Font.Gotham
-ConfirmDesc.TextSize = 14
-ConfirmDesc.TextColor3 = Theme.Text
-ConfirmDesc.Size = UDim2.new(1, 0, 0, 30)
-ConfirmDesc.Position = UDim2.new(0, 0, 0, 35)
-ConfirmDesc.BackgroundTransparency = 1
-ConfirmDesc.ZIndex = 12
-ConfirmDesc.Parent = ConfirmBox
-
+-- SAIR
+local ExitBox = createModalBox(120)
+local ExitTitle = Instance.new("TextLabel")
+ExitTitle.Text = "CONFIRMAÇÃO"
+ExitTitle.Font = Theme.Font
+ExitTitle.TextSize = 14
+ExitTitle.TextColor3 = Theme.Accent
+ExitTitle.Size = UDim2.new(1, 0, 0, 35)
+ExitTitle.BackgroundTransparency = 1
+ExitTitle.ZIndex = 12
+ExitTitle.Parent = ExitBox
+local ExitDesc = Instance.new("TextLabel")
+ExitDesc.Text = "Sair do Script?"
+ExitDesc.Font = Enum.Font.Gotham
+ExitDesc.TextSize = 14
+ExitDesc.TextColor3 = Theme.Text
+ExitDesc.Size = UDim2.new(1, 0, 0, 30)
+ExitDesc.Position = UDim2.new(0, 0, 0, 35)
+ExitDesc.BackgroundTransparency = 1
+ExitDesc.ZIndex = 12
+ExitDesc.Parent = ExitBox
 local YesBtn = Instance.new("TextButton")
 YesBtn.Text = "Sair"
 YesBtn.Size = UDim2.new(0, 90, 0, 30)
@@ -269,9 +336,8 @@ YesBtn.TextColor3 = Color3.new(1,1,1)
 YesBtn.Font = Theme.Font
 YesBtn.TextSize = 12
 YesBtn.ZIndex = 12
-YesBtn.BorderSizePixel = 0
-YesBtn.Parent = ConfirmBox
-
+YesBtn.Parent = ExitBox
+Instance.new("UICorner", YesBtn).CornerRadius = UDim.new(0, 4)
 local NoBtn = Instance.new("TextButton")
 NoBtn.Text = "Cancelar"
 NoBtn.Size = UDim2.new(0, 90, 0, 30)
@@ -281,28 +347,173 @@ NoBtn.TextColor3 = Theme.TextDark
 NoBtn.Font = Theme.Font
 NoBtn.TextSize = 12
 NoBtn.ZIndex = 12
-NoBtn.BorderSizePixel = 0
-NoBtn.Parent = ConfirmBox
+NoBtn.Parent = ExitBox
+Instance.new("UICorner", NoBtn).CornerRadius = UDim.new(0, 4)
 
--- Eventos
-CloseBtn.MouseButton1Click:Connect(function() ConfirmModal.Visible = true end)
-NoBtn.MouseButton1Click:Connect(function() ConfirmModal.Visible = false end)
+-- SETTINGS
+local SettingsBox = createModalBox(220)
+local SetTitle = Instance.new("TextLabel")
+SetTitle.Text = "CONFIGURAÇÕES"
+SetTitle.Font = Theme.Font
+SetTitle.TextSize = 14
+SetTitle.TextColor3 = Theme.Accent
+SetTitle.Size = UDim2.new(1, 0, 0, 35)
+SetTitle.BackgroundTransparency = 1
+SetTitle.ZIndex = 12
+SetTitle.Parent = SettingsBox
+
+local CreditsLabel = Instance.new("TextLabel")
+CreditsLabel.Text = "Script Created By DraxynSoulx"
+CreditsLabel.Font = Enum.Font.GothamBold
+CreditsLabel.TextSize = 13
+CreditsLabel.TextColor3 = Theme.Text
+CreditsLabel.Size = UDim2.new(1, 0, 0, 20)
+CreditsLabel.Position = UDim2.new(0, 0, 0, 40)
+CreditsLabel.BackgroundTransparency = 1
+CreditsLabel.ZIndex = 12
+CreditsLabel.Parent = SettingsBox
+
+local ExecInfo = Instance.new("TextLabel")
+ExecInfo.Text = "Executor: " .. ExecutorName .. "\nJogo: Flee the Facility"
+ExecInfo.Font = Enum.Font.Gotham
+ExecInfo.TextSize = 11
+ExecInfo.TextColor3 = Theme.TextDark
+ExecInfo.Size = UDim2.new(1, 0, 0, 30)
+ExecInfo.Position = UDim2.new(0, 0, 0, 65)
+ExecInfo.BackgroundTransparency = 1
+ExecInfo.ZIndex = 12
+ExecInfo.Parent = SettingsBox
+
+local KeyLabel = Instance.new("TextLabel")
+KeyLabel.Text = "Tecla Menu:"
+KeyLabel.Font = Enum.Font.Gotham
+KeyLabel.TextSize = 12
+KeyLabel.TextColor3 = Theme.Text
+KeyLabel.Size = UDim2.new(0, 100, 0, 30)
+KeyLabel.Position = UDim2.new(0, 20, 0, 120)
+KeyLabel.BackgroundTransparency = 1
+KeyLabel.TextXAlignment = Enum.TextXAlignment.Left
+KeyLabel.ZIndex = 12
+KeyLabel.Parent = SettingsBox
+
+local KeyBtn = Instance.new("TextButton")
+KeyBtn.Text = CurrentKey.Name
+KeyBtn.Size = UDim2.new(0, 80, 0, 26)
+KeyBtn.Position = UDim2.new(1, -100, 0, 122)
+KeyBtn.BackgroundColor3 = Theme.ContentColor
+KeyBtn.TextColor3 = Theme.Accent
+KeyBtn.Font = Theme.Font
+KeyBtn.TextSize = 12
+KeyBtn.ZIndex = 12
+KeyBtn.Parent = SettingsBox
+Instance.new("UICorner", KeyBtn).CornerRadius = UDim.new(0, 4)
+
+local CloseSetBtn = Instance.new("TextButton")
+CloseSetBtn.Text = "Fechar"
+CloseSetBtn.Size = UDim2.new(0, 240, 0, 30)
+CloseSetBtn.Position = UDim2.new(0, 20, 1, -40)
+CloseSetBtn.BackgroundColor3 = Theme.ContentColor
+CloseSetBtn.TextColor3 = Theme.TextDark
+CloseSetBtn.Font = Theme.Font
+CloseSetBtn.TextSize = 12
+CloseSetBtn.ZIndex = 12
+CloseSetBtn.Parent = SettingsBox
+Instance.new("UICorner", CloseSetBtn).CornerRadius = UDim.new(0, 4)
+
+-- ===========================
+-- LOGICA MODAIS
+-- ===========================
+CloseBtn.MouseButton1Click:Connect(function() ModalOverlay.Visible = true; ExitBox.Visible = true; SettingsBox.Visible = false end)
+SettingsBtn.MouseButton1Click:Connect(function() ModalOverlay.Visible = true; SettingsBox.Visible = true; ExitBox.Visible = false end)
+CloseSetBtn.MouseButton1Click:Connect(function() ModalOverlay.Visible = false; SettingsBox.Visible = false end)
+NoBtn.MouseButton1Click:Connect(function() ModalOverlay.Visible = false; ExitBox.Visible = false end)
 YesBtn.MouseButton1Click:Connect(function() ScreenGui:Destroy() end)
 
+local changingKey = false
+KeyBtn.MouseButton1Click:Connect(function()
+	if changingKey then return end
+	changingKey = true
+	KeyBtn.Text = "..."
+	local input = UserInputService.InputBegan:Wait()
+	if input.KeyCode ~= Enum.KeyCode.Unknown then
+		CurrentKey = input.KeyCode
+		KeyBtn.Text = CurrentKey.Name
+	end
+	changingKey = false
+end)
+
+-- ===========================
+-- LOGICA PESQUISA (CORREÇÃO DE TECLADO)
+-- ===========================
+local isSearching = false
+
+SearchBtn.MouseButton1Click:Connect(function()
+	isSearching = not isSearching
+	if isSearching then
+		-- ABRIR
+		SearchContainer:TweenSize(UDim2.new(0, 150, 0, 26), "Out", "Quad", 0.3, true)
+		task.wait(0.1)
+		SearchBox:CaptureFocus() -- Abre o teclado no mobile
+	else
+		-- FECHAR
+		SearchContainer:TweenSize(UDim2.new(0, 0, 0, 26), "Out", "Quad", 0.3, true)
+		SearchBox:ReleaseFocus() -- FECHA o teclado no mobile
+		SearchBox.Text = ""
+		
+		-- Reseta tudo
+		for _, page in pairs(ContentArea:GetChildren()) do
+			if page:IsA("ScrollingFrame") then
+				for _, item in pairs(page:GetDescendants()) do
+					if item:IsA("GuiObject") then item.Visible = true end
+				end
+			end
+		end
+	end
+end)
+
+SearchBox:GetPropertyChangedSignal("Text"):Connect(function()
+	local text = SearchBox.Text:lower()
+	for _, page in pairs(ContentArea:GetChildren()) do
+		if page:IsA("ScrollingFrame") then
+			for _, item in pairs(page:GetChildren()) do
+				if item:IsA("Frame") or item:IsA("TextButton") then
+					local label = item:FindFirstChildWhichIsA("TextLabel") 
+					local buttonText = (item:IsA("TextButton") and item.Text) or ""
+					local itemText = (label and label.Text) or buttonText
+					
+					if itemText:lower():find(text) then
+						item.Visible = true
+					else
+						if text ~= "" then item.Visible = false end
+					end
+				end
+			end
+			if text == "" then
+				for _, item in pairs(page:GetChildren()) do
+					if item:IsA("GuiObject") then item.Visible = true end
+				end
+			end
+		end
+	end
+end)
+
+-- ===========================
+-- LOGICA MINIMIZAR
+-- ===========================
 local function ToggleMenu()
 	if MainFrame.Visible then
 		MainFrame.Visible = false
-		-- Aparece instantaneamente (Sem Tween)
 		OpenButton.Visible = true
-		OpenButton.Size = UDim2.new(0, 50, 0, 50) 
 	else
 		MainFrame.Visible = true
 		OpenButton.Visible = false
 	end
 end
-
 MinimizeBtn.MouseButton1Click:Connect(ToggleMenu)
 OpenButton.MouseButton1Click:Connect(ToggleMenu)
+UserInputService.InputBegan:Connect(function(input, gp)
+	if not gp and input.KeyCode == CurrentKey then ToggleMenu() end
+end)
 
 -- ===========================
 -- SISTEMA DE ABAS
@@ -321,17 +532,10 @@ function createSidebarButton(iconId, name)
 	Page.ScrollBarImageColor3 = Theme.Accent
 	Page.Visible = false
 	Page.Parent = ContentArea
-
-	local PageLabel = Instance.new("TextLabel")
-	PageLabel.Text = name
-	PageLabel.Size = UDim2.new(1,0,0,30)
-	PageLabel.BackgroundTransparency = 1
-	PageLabel.TextColor3 = Theme.Accent
-	PageLabel.Font = Theme.Font
-	PageLabel.TextSize = 16
-	PageLabel.TextXAlignment = Enum.TextXAlignment.Left
-	PageLabel.Parent = Page
-
+	local PL = Instance.new("UIListLayout")
+	PL.Padding = UDim.new(0, 5)
+	PL.Parent = Page
+	
 	-- BUTTON
 	local TabButton = Instance.new("TextButton")
 	TabButton.Size = UDim2.new(1, 0, 0, Config.BtnHeight)
@@ -380,12 +584,8 @@ function createSidebarButton(iconId, name)
 		Icon.ImageColor3 = Theme.Accent
 	end)
 
-	table.insert(tabs, {
-		Page = Page,
-		Indicator = Indicator,
-		Label = Label,
-		Icon = Icon
-	})
+	table.insert(tabs, {Page = Page, Indicator = Indicator, Label = Label, Icon = Icon})
+	return Page
 end
 
 -- ===========================
@@ -408,4 +608,4 @@ if tabs[1] then
 	tabs[1].Icon.ImageColor3 = Theme.Accent
 end
 
-print("NexVoid Hub: Cores e Design Atualizados!")
+print("NexVoid Hub: Versão Final (Corrigida)")
